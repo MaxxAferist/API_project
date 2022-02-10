@@ -43,6 +43,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         font.setPointSize(12)
         self.checkBox.setFont(font)
 
+        self.MapType = 'map'
+
         self.retranslateUi()
 
     def retranslateUi(self):
@@ -50,6 +52,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.pushButton_2.setText("Reset")
         self.checkBox.setText("PostIndex")
         self.search_btn.clicked.connect(self.search)
+        self.comboBox.activated[str].connect(self.onChanged)
+
+    def onChanged(self, text):
+        if text == 'Спутник':
+            self.MapType = 'sat'
+        elif text == 'Гибрид':
+            self.MapType = 'sat,skl'
+        elif text == 'Схема':
+            self.MapType = 'map'
 
     def search(self):
         try:
@@ -59,7 +70,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             response = requests.request(method='GET',
                                         url='http://static-maps.yandex.ru/1.x',
                                         params={
-                                            'l': 'map',
+                                            'l': self.MapType,
                                             'll': self.lineEdit.text(),
                                             'spn': spn})
             print(response.url)
