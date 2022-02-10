@@ -1,5 +1,7 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
+import io
+import requests
 
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
@@ -15,11 +17,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.lineEdit.setGeometry(QtCore.QRect(10, 10, 361, 31))
         self.lineEdit_2 = QtWidgets.QLineEdit(self)
         self.lineEdit_2.setGeometry(QtCore.QRect(10, 50, 361, 31))
-        self.pushButton = QtWidgets.QPushButton(self)
-        self.pushButton.setGeometry(QtCore.QRect(380, 10, 101, 71))
+        self.search_btn = QtWidgets.QPushButton(self)
+        self.search_btn.setGeometry(QtCore.QRect(380, 10, 101, 71))
         font = QtGui.QFont()
         font.setPointSize(11)
-        self.pushButton.setFont(font)
+        self.search_btn.setFont(font)
         self.pushButton_2 = QtWidgets.QPushButton(self)
         self.pushButton_2.setGeometry(QtCore.QRect(490, 40, 101, 41))
         font = QtGui.QFont()
@@ -44,9 +46,29 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.retranslateUi()
 
     def retranslateUi(self):
-        self.pushButton.setText("Search")
+        self.search_btn.setText("Search")
         self.pushButton_2.setText("Reset")
         self.checkBox.setText("PostIndex")
+        self.search_btn.clicked.connect(self.search)
+
+    def search(self):
+        try:
+            spn = '0.005,0.005'
+            if self.lineEdit_2.text() != '':
+                spn = self.lineEdit_2.text()
+            response = requests.request(method='GET',
+                                        url='http://static-maps.yandex.ru/1.x',
+                                        params={
+                                            'l': 'map',
+                                            'll': self.lineEdit.text(),
+                                            'spn': spn})
+            print(response.url)
+            data = io.BytesIO(response.content).getvalue()
+            self.map_image = QtGui.QPixmap()
+            self.map_image.loadFromData(data)
+            self.label.setPixmap(self.map_image)
+        except:
+            print('ERROR')
 
 
 if __name__ == "__main__":
