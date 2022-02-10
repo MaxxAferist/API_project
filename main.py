@@ -2,10 +2,12 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 import io
 import requests
+from PyQt5.QtCore import Qt
 
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
+        self.spn = '0.005,0.005'
         super().__init__()
         self.resize(600, 600)
         self.label = QtWidgets.QLabel(self)
@@ -53,22 +55,33 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def search(self):
         try:
-            spn = '0.005,0.005'
             if self.lineEdit_2.text() != '':
-                spn = self.lineEdit_2.text()
+                self.spn = self.lineEdit_2.text()
+            print(self.lineEdit.text())
             response = requests.request(method='GET',
                                         url='http://static-maps.yandex.ru/1.x',
                                         params={
                                             'l': 'map',
                                             'll': self.lineEdit.text(),
-                                            'spn': spn})
-            print(response.url)
+                                            'spn': self.spn})
             data = io.BytesIO(response.content).getvalue()
             self.map_image = QtGui.QPixmap()
             self.map_image.loadFromData(data)
             self.label.setPixmap(self.map_image)
         except:
             print('ERROR')
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_PageUp:
+            temp = self.spn.split(',')
+            if float(temp[0]) < 75 and float(temp[1]) < 75:
+                self.spn = str(float(temp[0]) + float(temp[0]) / 5) + ',' + str(float(temp[1]) + float(temp[1]) / 5)
+                self.search()
+        elif event.key() == Qt.Key_PageDown:
+            temp = self.spn.split(',')
+            self.spn = str(float(temp[0]) - float(temp[0]) / 5) + ',' + str(float(temp[1]) - float(temp[1]) / 5)
+            print(self.spn)
+            self.search()
 
 
 if __name__ == "__main__":
