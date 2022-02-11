@@ -2,6 +2,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 import io
 import requests
+from PyQt5.QtCore import Qt
 
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
@@ -35,8 +36,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.label_2 = QtWidgets.QLabel(self)
         self.label_2.setGeometry(QtCore.QRect(10, 90, 361, 41))
         font = QtGui.QFont()
-        font.setPointSize(12)
+        font.setPointSize(8)
         self.label_2.setFont(font)
+        self.label_3 = QtWidgets.QLabel(self)
+        self.label_3.setGeometry(QtCore.QRect(10, 110, 361, 41))
+        self.label_3.setFont(font)
         self.checkBox = QtWidgets.QCheckBox(self)
         self.checkBox.setGeometry(QtCore.QRect(380, 90, 181, 41))
         font = QtGui.QFont()
@@ -44,6 +48,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.checkBox.setFont(font)
 
         self.MapType = 'map'
+        self.spn = '0.005,0.005'
 
         self.retranslateUi()
 
@@ -53,6 +58,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.checkBox.setText("PostIndex")
         self.search_btn.clicked.connect(self.search)
         self.comboBox.activated[str].connect(self.onChanged)
+        self.checkBox.stateChanged.connect(self.show_postalcode)
+        self.pushButton_2.clicked.connect(self.reset)
 
     def onChanged(self, text):
         if text == 'Спутник':
@@ -64,22 +71,68 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
     def search(self):
         try:
-            spn = '0.005,0.005'
             if self.lineEdit_2.text() != '':
-                spn = self.lineEdit_2.text()
+                self.spn = self.lineEdit_2.text()
             response = requests.request(method='GET',
                                         url='http://static-maps.yandex.ru/1.x',
                                         params={
                                             'l': self.MapType,
                                             'll': self.lineEdit.text(),
-                                            'spn': spn})
-            print(response.url)
+                                            'spn': self.spn})
             data = io.BytesIO(response.content).getvalue()
             self.map_image = QtGui.QPixmap()
             self.map_image.loadFromData(data)
             self.label.setPixmap(self.map_image)
+            geocoder_request = requests.request(method='GET',
+                                                url='http://geocode-maps.yandex.ru/1.x',
+                                                params={
+                                                    'apikey': '40d1649f-0493-4b70-98ba-98533de7710b',
+                                                    'geocode': self.lineEdit.text(),
+                                                    'format': 'json'})
+            json_response = geocoder_request.json()
+            toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+            adress = toponym['metaDataProperty']['GeocoderMetaData']['Address']['formatted']
+            self.label_2.setText(adress)
+            self.show()
         except:
             print('ERROR')
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_PageUp:
+            temp = self.spn.split(',')
+            if float(temp[0]) < 75 and float(temp[1]) < 75:
+                self.spn = str(round(float(temp[0]) + float(temp[0]) / 5, 6)) + ',' + str(round(float(temp[1]) + float(temp[1]) / 5, 6))
+                self.search()
+        elif event.key() == Qt.Key_PageDown:
+            temp = self.spn.split(',')
+            self.spn = str(round(float(temp[0]) - float(temp[0]) / 5, 6)) + ',' + str(round(float(temp[1]) - float(temp[1]) / 5, 6))
+            self.search()
+
+    def show_postalcode(self):
+        try:
+            if self.checkBox.isChecked():
+                self.label_3.show()
+                geocoder_request = requests.request(method='GET',
+                                                    url='http://geocode-maps.yandex.ru/1.x',
+                                                    params={
+                                                        'apikey': '40d1649f-0493-4b70-98ba-98533de7710b',
+                                                        'geocode': self.lineEdit.text(),
+                                                        'format': 'json'})
+                json_response = geocoder_request.json()
+                toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+                postalcode = toponym['metaDataProperty']['GeocoderMetaData']['Address']['postal_code']
+                self.label_3.setText(postalcode)
+            else:
+                self.label_3.hide()
+        except:
+            print('ERROR')
+
+    def reset(self):
+        self.lineEdit.setText('')
+        self.lineEdit_2.setText('')
+        self.label_2.setText('')
+        self.spn = '0.005,0.005'
+        self.MapType = 'map'
 
 
 if __name__ == "__main__":
