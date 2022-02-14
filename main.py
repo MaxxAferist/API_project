@@ -94,6 +94,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             adress = toponym['metaDataProperty']['GeocoderMetaData']['Address']['formatted']
             self.label_2.setText(adress)
             self.show()
+            self.current_cords = list(map(float, self.lineEdit.text().split(',')))
         except:
             print('ERROR')
 
@@ -107,6 +108,27 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             temp = self.spn.split(',')
             self.spn = str(round(float(temp[0]) - float(temp[0]) / 5, 6)) + ',' + str(round(float(temp[1]) - float(temp[1]) / 5, 6))
             self.search()
+        elif event.key() == Qt.Key_Right:
+            temp = list(map(float, self.spn.split(',')))
+            self.current_cords[0] += temp[0]
+            self.lineEdit.setText(str(self.current_cords[0]) + ',' + str(self.current_cords[1]))
+            self.search()
+        elif event.key() == Qt.Key_Left:
+            temp = list(map(float, self.spn.split(',')))
+            self.current_cords[0] -= temp[0]
+            self.lineEdit.setText(str(self.current_cords[0]) + ',' + str(self.current_cords[1]))
+            self.search()
+        elif event.key() == Qt.Key_Up:
+            temp = list(map(float, self.spn.split(',')))
+            self.current_cords[1] += temp[1]
+            self.lineEdit.setText(str(self.current_cords[0]) + ',' + str(self.current_cords[1]))
+            self.search()
+        elif event.key() == Qt.Key_Down:
+            temp = list(map(float, self.spn.split(',')))
+            self.current_cords[1] -= temp[1]
+            self.lineEdit.setText(str(self.current_cords[0]) + ',' + str(self.current_cords[1]))
+            self.search()
+
 
     def show_postalcode(self):
         try:
