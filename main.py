@@ -68,6 +68,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.MapType = 'sat,skl'
         elif text == 'Схема':
             self.MapType = 'map'
+        self.comboBox.clearFocus()
 
     def search(self):
         try:
@@ -97,6 +98,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.current_cords = list(map(float, self.lineEdit.text().split(',')))
         except:
             print('ERROR')
+        self.search_btn.clearFocus()
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_PageUp:
@@ -128,6 +130,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.current_cords[1] -= temp[1]
             self.lineEdit.setText(str(self.current_cords[0]) + ',' + str(self.current_cords[1]))
             self.search()
+        event.accept()
 
 
     def show_postalcode(self):
@@ -155,6 +158,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.label_2.setText('')
         self.spn = '0.005,0.005'
         self.MapType = 'map'
+        self.pushButton_2.clearFocus()
 
 
 if __name__ == "__main__":
