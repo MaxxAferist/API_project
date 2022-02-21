@@ -51,6 +51,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.spn = '0.005,0.005'
 
         self.retranslateUi()
+        self.pts = []
 
     def retranslateUi(self):
         self.search_btn.setText("Search")
@@ -104,11 +105,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         if event.key() == Qt.Key_PageUp:
             temp = self.spn.split(',')
             if float(temp[0]) < 75 and float(temp[1]) < 75:
-                self.spn = str(round(float(temp[0]) + float(temp[0]) / 5, 6)) + ',' + str(round(float(temp[1]) + float(temp[1]) / 5, 6))
+                self.spn = str(round(float(temp[0]) + float(temp[0]) / 5, 6)) + ',' + str(
+                    round(float(temp[1]) + float(temp[1]) / 5, 6))
                 self.search()
         elif event.key() == Qt.Key_PageDown:
             temp = self.spn.split(',')
-            self.spn = str(round(float(temp[0]) - float(temp[0]) / 5, 6)) + ',' + str(round(float(temp[1]) - float(temp[1]) / 5, 6))
+            self.spn = str(round(float(temp[0]) - float(temp[0]) / 5, 6)) + ',' + str(
+                round(float(temp[1]) - float(temp[1]) / 5, 6))
             self.search()
         elif event.key() == Qt.Key_Right:
             temp = list(map(float, self.spn.split(',')))
@@ -131,6 +134,26 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.lineEdit.setText(str(self.current_cords[0]) + ',' + str(self.current_cords[1]))
             self.search()
         event.accept()
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            if event.y() > 150:
+                dx = 300 - event.x()
+                dy = 375 - event.y()
+                pos = list(map(float, self.lineEdit.text().split(',')))
+                spn = list(map(float, self.spn.split(',')))
+                x = pos[0] - dx * spn[0] * 0.00558493151
+                y = pos[1] + dy * spn[1] * 0.00224583333
+                geocoder_request = requests.request(method='GET',
+                                                    url='http://geocode-maps.yandex.ru/1.x',
+                                                    params={
+                                                        'apikey': '40d1649f-0493-4b70-98ba-98533de7710b',
+                                                        'geocode': f'{x},{y}',
+                                                        'format': 'json'})
+                json_response = geocoder_request.json()
+                toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+                adress = toponym['metaDataProperty']['GeocoderMetaData']['Address']['formatted']
+                self.label_2.setText(adress)
 
 
     def show_postalcode(self):
