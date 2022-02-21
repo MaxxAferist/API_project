@@ -3,6 +3,19 @@ import sys
 import io
 import requests
 from PyQt5.QtCore import Qt
+import math
+
+
+def lonlat_distance(a, b):
+    degree_to_meters_factor = 111 * 1000
+    a_lon, a_lat = a
+    b_lon, b_lat = b
+    radians_lattitude = math.radians((a_lat + b_lat) / 2.)
+    lat_lon_factor = math.cos(radians_lattitude)
+    dx = abs(a_lon - b_lon) * degree_to_meters_factor * lat_lon_factor
+    dy = abs(a_lat - b_lat) * degree_to_meters_factor
+    distance = math.sqrt(dx * dx + dy * dy)
+    return distance
 
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
@@ -154,6 +167,33 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
                 adress = toponym['metaDataProperty']['GeocoderMetaData']['Address']['formatted']
                 self.label_2.setText(adress)
+        elif event.button() == Qt.RightButton:
+            if event.y() > 150:
+                dx = 300 - event.x()
+                dy = 375 - event.y()
+                pos = list(map(float, self.lineEdit.text().split(',')))
+                spn = list(map(float, self.spn.split(',')))
+                x = pos[0] - dx * spn[0] * 0.00558493151
+                y = pos[1] + dy * spn[1] * 0.00224583333
+                apikey_organizations = "0c285c96-1fb6-4d68-be42-7a67e33e7652"
+                response = requests.request(method='GET',
+                                            url="https://search-maps.yandex.ru/v1/",
+                                            params={
+                                                'apikey': apikey_organizations,
+                                                'lang': 'ru_RU',
+                                                'll': f'{x},{y}',
+                                                'type': 'biz',
+                                                'text': f'аптека',
+                                                'results': 1}
+                                            )
+                json_response = response.json()
+                organization = json_response["features"][0]
+                coords = organization["geometry"]["coordinates"]
+                if lonlat_distance([x, y], coords) <= 50:
+                    name = organization["properties"]["name"]
+                    self.label_2.setText(name)
+                else:
+                    self.label_2.setText(f'Расстояние больше 50 метров({round(lonlat_distance([x, y], coords))})')
 
 
     def show_postalcode(self):
